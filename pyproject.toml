@@ -3,14 +3,21 @@ name = "bitespeed"
 version = "0.1.0"
 description = "Default template for PDM package"
 authors = [{ name = "guacs", email = "guacs.guacs@gmail.com" }]
-dependencies = ["litestar>=2.6.1"]
+dependencies = [
+    "litestar>=2.6.1",
+    "aiosqlite>=0.20.0",
+    "python-dotenv>=1.0.1",
+]
 requires-python = "==3.12.*"
 readme = "README.md"
 license = { text = "MIT" }
 
 
 [project.optional-dependencies]
-test = ["pytest>=8.0.2", "pytest-randomly>=3.15.0"]
+test = [
+    "pytest>=8.0.2",
+    "pytest-asyncio>=0.23.5",
+]
 lint = ["ruff>=0.3.0", "mypy>=1.8.0"]
 [tool.pdm]
 distribution = false
@@ -67,3 +74,4 @@ strict = true
 # ---------------------------------
 [tool.pytest.ini_options]
 addopts = "--strict-markers --strict-config"
+asyncio_mode = "auto"
