@@ -129,3 +129,38 @@ def test_contacts_linked_with_email(test_client: TestClient, body: dict[str, str
 
     assert response.is_success
     assert_reponse_bodies_are_equal(response.json(), expected_response_body)
+
+
+def test_primary_account_turning_into_secondary_account(test_client: TestClient) -> None:
+    response = test_client.post(URL, json=create_body("123456", "itachi@uchiha.com"))
+    assert response.is_success
+
+    response = test_client.post(URL, json=create_body("345678", "itachi@konoha.com"))
+    assert response.is_success
+
+    # Before it turns into a secondary contact.
+    response = test_client.post(URL, json=create_body(None, "itachi@konoha.com"))
+    expected_response_body = {
+        "contact": {
+            "primaryContactId": 2,
+            "emails": ["itachi@konoha.com"],
+            "phoneNumbers": ["345678"],
+            "secondaryContactIds": [],
+        }
+    }
+
+    assert response.is_success
+    assert_reponse_bodies_are_equal(response.json(), expected_response_body)
+
+    # After it turns into a secondary contact.
+    response = test_client.post(URL, json=create_body("123456", "itachi@konoha.com"))
+    expected_response_body = {
+        "contact": {
+            "primaryContactId": 1,
+            "emails": ["itachi@uchiha.com", "itachi@konoha.com"],
+            "phoneNumbers": ["123456", "345678"],
+            "secondaryContactIds": [2],
+        }
+    }
+    assert response.is_success
+    assert_reponse_bodies_are_equal(response.json(), expected_response_body)
