@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 from collections.abc import AsyncGenerator
-from contextlib import asynccontextmanager
 
 from aiosqlite import Connection
 from aiosqlite import Cursor
@@ -16,7 +15,6 @@ def dict_factory(cursor: Cursor, row: tuple[Any, ...]) -> dict[str, Any]:
     return dict(zip(fields, row, strict=False))
 
 
-@asynccontextmanager
 async def get_connection() -> AsyncGenerator[Connection, None]:
     async with connect(settings.DB_URL, isolation_level=None) as conn:
         conn.row_factory = dict_factory  # type: ignore

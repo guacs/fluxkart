@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from collections.abc import AsyncIterable
+from contextlib import asynccontextmanager
 from typing import Any
 
 import pytest
@@ -10,10 +11,12 @@ from litestar.di import Provide
 from litestar.testing import TestClient
 
 from bitespeed.app import create_app
-from bitespeed.db import get_connection
+from bitespeed.db import get_connection as _get_connection
 from bitespeed.db import run_startup_script
 
 URL = "/identify"
+
+get_connection = asynccontextmanager(_get_connection)
 
 
 def create_body(phone_number: str | None, email: str | None) -> dict[str, str | None]:
