@@ -10,10 +10,7 @@ from dotenv import load_dotenv
 ROOT_DIR = Path(__file__).parent.parent
 
 
-if "pytest" in sys.modules:
-    _env_path = ROOT_DIR / ".test.env"
-else:
-    _env_path = ROOT_DIR / ".env"
+_env_path = ROOT_DIR / ".test.env" if "pytest" in sys.modules else ROOT_DIR / ".env"
 
 
 load_dotenv(_env_path)
