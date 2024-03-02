@@ -1,11 +1,17 @@
 from __future__ import annotations
 
+from collections.abc import AsyncIterable
 from typing import Any
 
 import pytest
+import pytest_asyncio
+from aiosqlite import Connection
+from litestar.di import Provide
 from litestar.testing import TestClient
 
 from bitespeed.app import create_app
+from bitespeed.db import get_connection
+from bitespeed.db import run_startup_script
 
 URL = "/identify"
 
@@ -30,9 +36,19 @@ def assert_reponse_bodies_are_equal(actual: dict[str, Any], expected: dict[str, 
     ), "secondary contact ids differ"
 
 
+@pytest_asyncio.fixture()
+async def conn() -> AsyncIterable[Connection]:
+    async with get_connection() as conn:
+        await run_startup_script(conn)
+        yield conn
+
+
 @pytest.fixture()
-def test_client() -> TestClient:
-    app = create_app()
+def test_client(conn: Connection) -> TestClient:
+    async def get_conn() -> Connection:
+        return conn
+
+    app = create_app({"db_conn": Provide(get_conn, use_cache=True)})
 
     return TestClient(app)
 
@@ -76,7 +92,7 @@ def test_contacts_linked_with_phone_number(test_client: TestClient, body: dict[s
             "primaryContactId": 1,
             "emails": ["itachi@uchiha.com", "itachi@konoha.com"],
             "phoneNumbers": ["123456"],
-            "secondaryContactIds": [],
+            "secondaryContactIds": [2],
         }
     }
 
@@ -105,9 +121,9 @@ def test_contacts_linked_with_email(test_client: TestClient, body: dict[str, str
     expected_response_body = {
         "contact": {
             "primaryContactId": 1,
-            "emails": ["itachi@uchiha.com", "itachi@konoha.com"],
-            "phoneNumbers": ["123456"],
-            "secondaryContactIds": [],
+            "emails": ["itachi@uchiha.com"],
+            "phoneNumbers": ["123456", "345678"],
+            "secondaryContactIds": [2],
         }
     }
 
