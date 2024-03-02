@@ -42,9 +42,7 @@ def test_new_contact_created(test_client: TestClient) -> None:
     response = test_client.post(URL, json=body)
 
     assert response.is_success
-    response_body = response.json()
-
-    assert response_body == {
+    expected_response_body = {
         "contact": {
             "primaryContactId": 1,
             "emails": ["itachi@uchiha.com"],
@@ -52,6 +50,7 @@ def test_new_contact_created(test_client: TestClient) -> None:
             "secondaryContactIds": [],
         }
     }
+    assert_reponse_bodies_are_equal(response.json(), expected_response_body)
 
 
 @pytest.mark.parametrize(
