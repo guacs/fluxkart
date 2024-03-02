@@ -2,14 +2,68 @@
 name = "bitespeed"
 version = "0.1.0"
 description = "Default template for PDM package"
-authors = [
-    {name = "guacs", email = "guacs.guacs@gmail.com"},
-]
-dependencies = []
+authors = [{ name = "guacs", email = "guacs.guacs@gmail.com" }]
+dependencies = ["litestar>=2.6.1"]
 requires-python = "==3.12.*"
 readme = "README.md"
-license = {text = "MIT"}
+license = { text = "MIT" }
 
 
+[project.optional-dependencies]
+test = ["pytest>=8.0.2", "pytest-randomly>=3.15.0"]
+lint = ["ruff>=0.3.0", "mypy>=1.8.0"]
 [tool.pdm]
 distribution = false
+
+
+[tool.ruff]
+fix = true
+line-length = 120
+
+
+[tool.ruff.lint]
+select = ["ALL"]
+ignore = [
+  "ANN101", # annotate 'self'
+  "ANN102", # annotate 'cls'
+  "COM812", # no trailing commas (recommended by ruff format)
+  "D100",   # missing docstring in public module
+  "D101",   # missing docstring in public class
+  "D102",   # missing docstring in public method
+  "D103",   # missing docstring in public function
+  "D104",   # missing docstring in public package
+  "D105",   # missing docstring in magic methods
+  "D107",   # missing docstring in __init__
+  "D202",   # no blank lines allowed after function docstring
+  "D203",   # blank line before class
+  "D213",   # multiline second line
+  "EM101",  # exceptions can use string literals
+  "EM102",  # allow f-strings in exception messages
+  "FIX002", # allow unfixed todos
+  "ISC001", # string concatation (recommended by ruff format)
+  "S101",   # allow asserts
+  "TD002",  # no author needed in todo blocks
+  "TD003",  # no issue link needed
+  "TRY003", # allow messages within exceptions
+  "TRY300", # allow return statements within 'try' blocks
+  "TCH",    # don't use TYPE_CHECKING blocks
+]
+
+[tool.ruff.lint.isort]
+force-single-line = true
+required-imports = ["from __future__ import annotations"]
+
+
+# ---------------------------------
+# Mypy configurations
+# ---------------------------------
+[tool.mypy]
+python_version = "3.12"
+strict = true
+
+
+# ---------------------------------
+# Pytest configurations
+# ---------------------------------
+[tool.pytest.ini_options]
+addopts = "--strict-markers --strict-config"
