@@ -5,7 +5,7 @@
 groups = ["default", "test", "lint", "dev"]
 strategy = ["cross_platform", "inherit_metadata"]
 lock_version = "4.4.1"
-content_hash = "sha256:23df7363499a7b2389fbfac52133be8ce07ed44868a956011d81c76bee2ea2cc"
+content_hash = "sha256:3943bb85deb41cf590ac40a165e8300d1716d72c27ab95050cb12ffb698d2da3"
 
 [[package]]
 name = "aiosqlite"
@@ -493,4 +493,19 @@ groups = ["default", "lint"]
 files = [
     {file = "typing_extensions-4.10.0-py3-none-any.whl", hash = "sha256:69b1a937c3a517342112fb4c6df7e72fc39a38e7891a5730ed4985b5214b5475"},
     {file = "typing_extensions-4.10.0.tar.gz", hash = "sha256:b0abd7c89e8fb96f98db18d86106ff1d90ab692004eb746cf6eda2682f91b3cb"},
+]
+
+[[package]]
+name = "uvicorn"
+version = "0.27.1"
+requires_python = ">=3.8"
+summary = "The lightning-fast ASGI server."
+groups = ["default"]
+dependencies = [
+    "click>=7.0",
+    "h11>=0.8",
+]
+files = [
+    {file = "uvicorn-0.27.1-py3-none-any.whl", hash = "sha256:5c89da2f3895767472a35556e539fd59f7edbe9b1e9c0e1c99eebeadc61838e4"},
+    {file = "uvicorn-0.27.1.tar.gz", hash = "sha256:3d9a267296243532db80c83a959a3400502165ade2c1338dea4e67915fd4745a"},
 ]
