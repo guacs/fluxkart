@@ -1,5 +1,11 @@
 # Bitespeed
 
+## Demo
+
+The demo's root path is at:
+
+`https://fluxkart-yxff.onrender.com/`
+
 ## Run
 
 ```bash
