@@ -11,4 +11,4 @@ RUN pdm install --prod --no-editable
 
 EXPOSE 8000
 
-CMD ["pdm", "run", "python", "-m", "uvicorn", "--factory", "--port", "8000", "bitespeed.app:create_app"]
+CMD ["pdm", "run", "python", "-m", "uvicorn", "--factory", "--port", "10000", "--host", "0.0.0.0", "bitespeed.app:create_app"]
