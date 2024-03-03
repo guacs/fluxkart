@@ -2,13 +2,15 @@ from __future__ import annotations
 
 from typing import Final
 
-from aiosqlite import Connection
+from asyncpg import Connection
+from msgspec.structs import asdict
 from pypika import Criterion
 from pypika import Parameter
-from pypika import SQLLiteQuery as Query
+from pypika import PostgreSQLQuery as Query
 from pypika import Table
 
 from bitespeed.models import Contact
+from bitespeed.models import ContactFilter
 from bitespeed.models import IdentifyBody
 from bitespeed.models import NewContact
 from bitespeed.models import SingleContact
@@ -20,20 +22,17 @@ class ContactStore:
     def __init__(self, conn: Connection) -> None:
         self._conn = conn
 
-    async def get_all(self, email: str | None, phone_number: str | None) -> list[SingleContact]:
-        if not email and not phone_number:
+    async def get_all(self, contact_filter: ContactFilter) -> list[SingleContact]:
+        if not contact_filter.email and not contact_filter.phone_number:
             raise ValueError("either email or phone number have to be provided")
 
         all_contacts = self._table.as_("all_contacts")
         contacts = self._table
 
-        filters, parameters = [], []
-        if email:
-            filters.append(contacts.email == Parameter("?"))
-            parameters.append(email)
-        if phone_number:
-            filters.append(contacts.phone_number == Parameter("?"))
-            parameters.append(phone_number)
+        filters = []
+        contact_filter_dict = {key: value for key, value in asdict(contact_filter).items() if value is not None}
+        for i, key in enumerate(contact_filter_dict, 1):
+            filters.append(getattr(contacts, key) == Parameter(f"${i}"))
 
         query = (
             Query.from_(all_contacts)
@@ -43,6 +42,7 @@ class ContactStore:
                 all_contacts.email,
                 all_contacts.linked_id,
                 all_contacts.link_precedence,
+                all_contacts.created_at,
             )
             .distinct()
             .join(contacts)
@@ -57,42 +57,39 @@ class ContactStore:
             .get_sql()
         )
 
-        async with self._conn.cursor() as cursor:
-            await cursor.execute(query, parameters)
-            rows = await cursor.fetchall()
+        rows = await self._conn.fetch(query, *contact_filter_dict.values())
 
-            return [SingleContact(**r) for r in rows]
+        return [
+            SingleContact(r["id"], r["phone_number"], r["email"], r["linked_id"], r["link_precedence"]) for r in rows
+        ]
 
     async def add_new_contact(self, new_contact: NewContact) -> int:
         query = """
 INSERT INTO
   contact (phone_number, email, linked_id, link_precedence)
 VALUES
-  (?, ?, ?, ?) RETURNING id;
+  ($1, $2, $3, $4) RETURNING id;
         """
 
-        async with self._conn.cursor() as cursor:
-            await cursor.execute(
-                query, (new_contact.phone_number, new_contact.email, new_contact.linked_id, new_contact.link_precedence)
-            )
-            row = await cursor.fetchone()
-
-            assert row is not None
-
-            return row["id"]
-
-    async def mark_as_secondary(self, contact_ids: list[int], linked_id: int) -> None:
-        table = self._table
-        query = (
-            Query.update(table)
-            .set(table.link_precedence, "secondary")
-            .set(table.linked_id, Parameter("?"))
-            .where(table.id.isin([Parameter("?") for _ in range(len(contact_ids))]))
-            .get_sql()
+        contact_id = await self._conn.fetchval(
+            query, new_contact.phone_number, new_contact.email, new_contact.linked_id, new_contact.link_precedence
         )
 
-        async with self._conn.cursor() as cursor:
-            await cursor.execute(query, (linked_id, *contact_ids))
+        assert contact_id is not None
+        return contact_id
+
+    async def mark_as_secondary(self, contact_ids: list[int], linked_id: int) -> None:
+        query = """
+UPDATE contact
+SET
+  link_precedence = 'secondary',
+  linked_id = $1
+WHERE
+  id = ANY($2::integer[]);
+
+        """
+
+        await self._conn.execute(query, linked_id, contact_ids)
 
 
 class IdentifyService:
@@ -100,7 +97,7 @@ class IdentifyService:
         self._store = contact_store
 
     async def identify(self, identify_body: IdentifyBody) -> Contact:
-        contacts = await self._store.get_all(identify_body.email, identify_body.phone_number)
+        contacts = await self._store.get_all(ContactFilter(identify_body.email, identify_body.phone_number))
         if not contacts:
             primary = await self._new_primary_contact(identify_body)
 
@@ -188,7 +185,3 @@ class IdentifyService:
             linked_id,
             "secondary",
         )
-
-
-def provide_identify_service(db_conn: Connection) -> IdentifyService:
-    return IdentifyService(ContactStore(db_conn))

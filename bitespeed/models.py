@@ -58,5 +58,10 @@ class Contact(Struct, rename="camel"):
         return Contact(primary.id, emails=emails, phone_numbers=phone_numbers, secondary_contact_ids=secondary_ids)
 
 
+class ContactFilter(Struct):
+    email: str | None
+    phone_number: str | None
+
+
 class IdentifyResponse(Struct, rename="camel"):
     contact: Contact
